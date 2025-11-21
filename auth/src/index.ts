@@ -1,0 +1,56 @@
+import express from "express";
+import cors, { CorsOptions } from "cors";
+
+const app = express().disable("x-powered-by");
+
+import dotenv from "dotenv";
+dotenv.config();
+const host = process.env.AUTH_SERVICE_HOST;
+if (!host) throw new Error('Missing AUTH_SERVICE_HOST.');
+const port = process.env.AUTH_SERVICE_PORT;
+if (!port) throw new Error('Missing AUTH_SERVICE_PORT.');
+const mongoURI = process.env.AUTH_SERVICE_MONGO_URI;
+if (!mongoURI) throw new Error('Missing AUTH_SERVICE_MONGO_URI.');
+
+const corsAllowedOrigins = [
+    "http://localhost:8080",
+    "https://savidgeapps.com",
+    "http://savidgeapps.com"
+];
+
+const corsOptions: CorsOptions = {
+    origin: (origin, callback) => {
+        if (process.env.ENVIRONMENT === "dev") callback(null, true);
+        else if (!origin || corsAllowedOrigins.includes(origin)) callback(null, true);
+        else callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+
+import { logger } from "./middleware/logEvents";
+app.use(logger);
+
+import usersRouter from "./routes/users";
+app.use("/users", usersRouter);
+
+import { errorHandler } from "./middleware/errorHandler";
+app.use(errorHandler);
+
+import { mongoConnector } from "@dsavidge02/mongo-connector-ts";
+
+let server;
+
+mongoConnector.connect(mongoURI)
+    .then(() => {
+        mongoConnector.setDB("auth");
+        server = app.listen(port, () => {
+            console.log(`Auth service is running on ${host}:${port}`);
+        });
+    })
+    .catch((err) => {
+        console.error('ERROR: Failed to connect to MongoDB:', err);
+    });

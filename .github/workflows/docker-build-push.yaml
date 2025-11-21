@@ -1,0 +1,72 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_PREFIX: full-stack-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get AWS Account ID
+        id: get-account-id
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          echo "ECR_BASE=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+      
+      - name: Build and push auth service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth
+          push: true
+          tags: |
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/auth-service:latest
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:latest
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output image URIs
+        run: |
+          echo "✅ Images pushed successfully!"
+          echo "Auth Service:"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/auth-service:latest"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/auth-service:${{ github.sha }}"
+          echo "Frontend Service:"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:latest"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:${{ github.sha }}"
