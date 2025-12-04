@@ -1,5 +1,6 @@
 import express from "express";
 import cors, { CorsOptions } from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express().disable("x-powered-by");
 
@@ -30,11 +31,27 @@ const corsOptions: CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 import { logger } from "./middleware/logEvents";
 app.use(logger);
 
-import usersRouter from "./routes/users";
+import loginRouter from "./routes/login";
+app.use("/login", loginRouter);
+
+import logoutRouter from "./routes/logout";
+app.use("/logout", logoutRouter);
+
+import refreshTokenRouter from "./routes/refreshToken";
+app.use("/refresh", refreshTokenRouter);
+
+import registerRouter from "./routes/register";
+app.use("/register", registerRouter);
+
+import userRouter from "./routes/protected/user";
+app.use("/user", userRouter);
+
+import usersRouter from "./routes/protected/users";
 app.use("/users", usersRouter);
 
 import { errorHandler } from "./middleware/errorHandler";

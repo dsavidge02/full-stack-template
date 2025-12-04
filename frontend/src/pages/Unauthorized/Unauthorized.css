@@ -1,0 +1,125 @@
+.unauthorized-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.unauthorized-content {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.unauthorized-title {
+  font-size: 6rem;
+  font-weight: 700;
+  color: #667eea;
+  margin: 0;
+  line-height: 1;
+}
+
+.unauthorized-subtitle {
+  font-size: 2rem;
+  color: #333;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+
+.unauthorized-message {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 1.5rem 0;
+  line-height: 1.6;
+}
+
+.unauthorized-details {
+  font-size: 0.95rem;
+  color: #888;
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.path {
+  font-family: 'Courier New', monospace;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.unauthorized-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.btn-home,
+.btn-profile {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.btn-home {
+  background-color: #667eea;
+  color: white;
+}
+
+.btn-home:hover {
+  background-color: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-profile {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-profile:hover {
+  background-color: #e8e8e8;
+  border-color: #d0d0d0;
+  transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .unauthorized-container {
+    padding: 1rem;
+  }
+
+  .unauthorized-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .unauthorized-title {
+    font-size: 4rem;
+  }
+
+  .unauthorized-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .unauthorized-actions {
+    flex-direction: column;
+  }
+
+  .btn-home,
+  .btn-profile {
+    width: 100%;
+  }
+}
+
+
