@@ -84,7 +84,7 @@ export const AuthProvider = ({children}: {children: React.ReactNode}) => {
     const doLogout = async () => {
         setAuth({ user: null, accessToken: '' });
         try {
-            await axiosAuthUnprotected.post('/logout');
+            await axiosAuthUnprotected.get('/logout');
             return { success: true, status: 200 };
         }
         catch (err) {
