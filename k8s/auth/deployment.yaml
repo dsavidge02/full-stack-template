@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: default
+  labels:
+    app: auth-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        # Replace <ECR_BASE> with your ECR base URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com)
+        # Or use the image tag from GitHub Actions: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/full-stack-template/auth-service:latest
+        image: <ECR_BASE>/full-stack-template/auth-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        # Environment variables from ConfigMap
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: auth-config
+              key: ENVIRONMENT
+        - name: AUTH_SERVICE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: auth-config
+              key: AUTH_SERVICE_PORT
+        - name: CERT_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: auth-config
+              key: CERT_PATH
+        # Environment variables from Secrets
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: MONGO_URI
+        - name: REFRESH_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: REFRESH_TOKEN_SECRET
+        # Volume mount for certificates
+        volumeMounts:
+        - name: certs
+          mountPath: /app/certs
+          readOnly: true
+        # Health probes
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        # Resource limits
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      volumes:
+      - name: certs
+        secret:
+          secretName: auth-certs
+
