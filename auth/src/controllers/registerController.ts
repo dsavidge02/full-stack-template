@@ -11,23 +11,21 @@ interface RegisterRequestBody {
 }
 
 export const handleRegister = async (req: Request, res: Response) => {
-    const { username, email, password } = req.body as RegisterRequestBody;
-
-    if ( !username || !email || !password ) return res.status(400).json({ 'message': 'Username, email, and password are required.' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser: NewUser = {
-        username,
-        email,
-        password: hashedPassword,
-        roles: [ROLES_LIST.USER]
-    };
-
-    const uniqueFields: (keyof NewUser)[] = ['username', 'email'];
-
     try {
-        const result = await mongoConnector.createOne<NewUser>('users', newUser, uniqueFields);
+        const { username, email, password } = req.body as RegisterRequestBody;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser: NewUser = {
+            username,
+            email,
+            password: hashedPassword,
+            roles: [ROLES_LIST.USER]
+        };
+
+        const uniqueFields: (keyof NewUser)[] = ['username', 'email'];
+    
+        await mongoConnector.createOne<NewUser>('users', newUser, uniqueFields);
         res.status(201).json({ 'message': 'User created successfully.' });
     }
     catch (err) {

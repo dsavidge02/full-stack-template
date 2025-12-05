@@ -30,7 +30,7 @@ const corsOptions: CorsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({limit: '10mb'}));
 app.use(cookieParser());
 
 import { logger } from "./middleware/logEvents";

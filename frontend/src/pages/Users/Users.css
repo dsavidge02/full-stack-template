@@ -68,6 +68,7 @@
 
 .btn-edit,
 .btn-delete,
+.btn-unlock,
 .btn-confirm-delete,
 .btn-cancel {
   padding: 0.5rem 1rem;
@@ -115,8 +116,18 @@
   background-color: #616161;
 }
 
+.btn-unlock {
+  background-color: #ff9800;
+  color: white;
+}
+
+.btn-unlock:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
 .btn-edit:disabled,
 .btn-delete:disabled,
+.btn-unlock:disabled,
 .btn-confirm-delete:disabled,
 .btn-cancel:disabled {
   opacity: 0.5;
@@ -202,6 +213,55 @@
   text-align: center;
   font-size: 1.1rem;
   margin-top: 2rem;
+}
+
+.failed-login-info {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: #fff3e0;
+  border-radius: 6px;
+  border-left: 4px solid #ff9800;
+  font-size: 0.9rem;
+}
+
+.failed-login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.failed-login-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.failed-login-count {
+  font-weight: 600;
+  color: #ff9800;
+  font-size: 1rem;
+}
+
+.failed-login-count.warning {
+  color: #f57c00;
+  font-size: 1.1rem;
+}
+
+.last-failed-attempt {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.account-locked-badge {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #ffebee;
+  border-radius: 4px;
+  color: #c62828;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 /* Responsive design */

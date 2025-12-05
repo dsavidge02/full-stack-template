@@ -5,16 +5,22 @@ import { ObjectId } from 'mongodb';
 import { ROLES_LIST } from '../config/roles_list';
 
 export const handleGetUsers = async (req: Request, res: Response) => {
-    const usersArray = await mongoConnector.getCollectionArray<User>('users');
-    if (!usersArray) return res.sendStatus(404);
+    try {
+        const usersArray = await mongoConnector.getCollectionArray<User>('users');
+        if (!usersArray) return res.status(404).json({ 'message': 'Users not found.' });
 
-    const cleanUsers: CleanUser[] = usersArray.map(({
-        password,
-        refreshToken,
-        ...user
-    }) => user);
+        const cleanUsers: CleanUser[] = usersArray.map(({
+            password,
+            refreshToken,
+            ...user
+        }) => user);
 
-    res.json({ 'users': cleanUsers });
+        res.json({ 'users': cleanUsers });
+    }
+    catch (err) {
+        console.error('Error getting users:', err);
+        res.status(500).json({ 'message': 'Error getting users.' });
+    }
 };
 
 interface DeleteUserRequestBody {
@@ -24,10 +30,9 @@ interface DeleteUserRequestBody {
 export const handleDeleteUser = async (req: Request, res: Response) => {
     try {
         const { userId } = req.body as DeleteUserRequestBody;
-        if ( !userId ) return res.status(400).json({ 'message': 'User ID is required.' });
 
         const foundUser = await mongoConnector.getOne<User>('users', { '_id': userId });
-        if (!foundUser) return res.sendStatus(401);
+        if (!foundUser) return res.status(404).json({ 'message': 'User not found.' });
 
         await mongoConnector.deleteOne<User>('users', foundUser);
         res.json({ 'message': 'User deleted successfully.' });
@@ -46,10 +51,9 @@ interface UpdateUserRolesRequestBody {
 export const handleUpdateUserRoles = async (req: Request, res: Response) => {
     try {
         const { userId, roles } = req.body as UpdateUserRolesRequestBody;
-        if ( !userId || !roles ) return res.status(400).json({ 'message': 'User ID and roles are required.' });
 
         const foundUser = await mongoConnector.getOne<User>('users', { '_id': userId });
-        if (!foundUser) return res.sendStatus(401);
+        if (!foundUser) return res.status(404).json({ 'message': 'User not found.' });
 
         const validRoles = Object.values(ROLES_LIST);
         const updatedRoles = roles.filter(role => validRoles.includes(role));
@@ -61,5 +65,27 @@ export const handleUpdateUserRoles = async (req: Request, res: Response) => {
     catch (err) {
         console.error('Error updating user roles:', err);
         res.status(500).json({ 'message': 'Error updating user roles.' });
+    }
+}
+
+interface UnlockUserRequestBody {
+    userId: ObjectId;
+}
+
+export const handleUnlockUser = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.body as UnlockUserRequestBody;
+
+        const foundUser = await mongoConnector.getOne<User>('users', { '_id': userId });
+        if (!foundUser) return res.status(404).json({ 'message': 'User not found.' });
+
+        // Reset failed login attempts and unlock account
+        foundUser.failedLogin = false;
+        await mongoConnector.updateOne<User>('users', foundUser);
+        res.json({ 'message': 'User unlocked successfully.' });
+    }
+    catch (err) {
+        console.error('Error unlocking user:', err);
+        res.status(500).json({ 'message': 'Error unlocking user.' });
     }
 }

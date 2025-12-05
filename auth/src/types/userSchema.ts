@@ -9,6 +9,12 @@ export interface User {
     roles: number[];
     twitch_user_id?: string;
     refreshToken?: string;
+    failedLogin?: false |{
+        failedLoginAttempts: number;
+        lastFailedLoginAttempt: Date;
+        isLocked: boolean;
+        accountLockedUntil: Date;
+    }
 };
 
 export interface NewUser {
@@ -23,6 +29,13 @@ export interface CleanUser {
     username: string;
     email: string;
     roles: number[];
+    twitch_user_id?: string;
+    failedLogin?: false | {
+        failedLoginAttempts: number;
+        lastFailedLoginAttempt: Date;
+        isLocked: boolean;
+        accountLockedUntil: Date;
+    };
 }
 
 export interface AuthUserRequest extends Request {

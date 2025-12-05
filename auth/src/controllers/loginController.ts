@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { mongoConnector } from '@dsavidge02/mongo-connector-ts';
 import { User } from '../types/userSchema'
+import { SECURITY_CONFIG } from '../config/security_config';
 
 interface LoginRequestBody {
     username: string;
@@ -16,56 +17,120 @@ const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 if (!refreshTokenSecret) throw new Error("Missing REFRESH_TOKEN_SECRET env variable.");
 
 export const handleLogin = async (req: Request, res: Response) => {
-    const { username, password } = req.body as LoginRequestBody;
+    try {
+        const { username, password } = req.body as LoginRequestBody;
 
-    if ( !username || ! password ) return res.status(400).json({ 'message': 'Username and password are required. '});
+        const foundUser = await mongoConnector.getOne<User>('users', { username });
+        if (!foundUser) {
+            // Don't reveal if user exists - same response as wrong password
+            return res.status(401).json({
+                'message': 'Invalid credentials.'
+            });
+        }
 
-    const foundUser = await mongoConnector.getOne<User>('users', { username });
-    if (!foundUser) return res.sendStatus(401);
+        const now = new Date();
+        if (foundUser.failedLogin && foundUser.failedLogin.isLocked) {
+            if (foundUser.failedLogin.accountLockedUntil > now) {
+                const minutesRemaining = Math.ceil(
+                    (foundUser.failedLogin.accountLockedUntil.getTime() - now.getTime()) / (60 * 1000)
+                );
+                return res.status(423).json({
+                    'message': `Account locked. Try again in ${minutesRemaining} minutes.`
+                });
+            }
+            else {
+                foundUser.failedLogin.isLocked = false;
+                foundUser.failedLogin.failedLoginAttempts = 0;
+            }
+        }
 
-    const pMatch = await bcrypt.compare(password, foundUser.password);
-    if (pMatch) {
-        const accessToken = jwt.sign(
-            {
-                UserInfo: {
-                    _id: foundUser._id,
-                    username: foundUser.username,
-                    roles: foundUser.roles
+        const pMatch = await bcrypt.compare(password, foundUser.password);
+        if (pMatch) {
+
+            if ( SECURITY_CONFIG.RESET_ATTEMPTS_ON_SUCCESS && foundUser.failedLogin) foundUser.failedLogin = false;
+
+            const accessToken = jwt.sign(
+                {
+                    UserInfo: {
+                        _id: foundUser._id,
+                        username: foundUser.username,
+                        roles: foundUser.roles
+                    }
+                },
+                privateKey,
+                {
+                    algorithm: 'RS256',
+                    expiresIn: '30s'
                 }
-            },
-            privateKey,
-            {
-                algorithm: 'RS256',
-                expiresIn: '30s'
+            );
+
+            const refreshToken = jwt.sign(
+                {
+                    username: foundUser.username
+                },
+                refreshTokenSecret,
+                {
+                    expiresIn: '1d'
+                }
+            );
+
+            foundUser.refreshToken = refreshToken;
+
+            const result = await mongoConnector.updateOne<User>('users', foundUser);
+
+            if (!result || result.username !== username) {
+                return res.status(401).json({
+                    'message': 'Invalid credentials.'
+                });
             }
-        );
 
-        const refreshToken = jwt.sign(
-            {
-                username: foundUser.username
-            },
-            refreshTokenSecret,
-            {
-                expiresIn: '1d'
+            res.cookie('jwt', refreshToken, {
+                httpOnly: true,
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            res.json({ accessToken });
+        }
+        else {
+            if (!foundUser.failedLogin) {
+                foundUser.failedLogin = {
+                    failedLoginAttempts: 1,
+                    lastFailedLoginAttempt: now,
+                    isLocked: false,
+                    accountLockedUntil: new Date(0)
+                };
+            } 
+            else {
+                foundUser.failedLogin.failedLoginAttempts++;
+                foundUser.failedLogin.lastFailedLoginAttempt = now;
             }
-        );
 
-        foundUser.refreshToken = refreshToken;
+            if (foundUser.failedLogin.failedLoginAttempts >= SECURITY_CONFIG.MAX_FAILED_LOGIN_ATTEMPTS) {
+                foundUser.failedLogin.isLocked = true;
+                foundUser.failedLogin.accountLockedUntil = new Date(
+                    now.getTime() + SECURITY_CONFIG.LOCKOUT_DURATION_MS
+                );
 
-        const result = await mongoConnector.updateOne<User>('users', foundUser);
+                await mongoConnector.updateOne<User>('users', foundUser);
 
-        if (!result || result.username !== username) return res.sendStatus(401);
+                return res.status(423).json({
+                    'message': `Account locked due to too many failed login attempts. Please try again in ${
+                        Math.ceil(SECURITY_CONFIG.LOCKOUT_DURATION_MS / (60 * 1000))
+                    } minutes.`
+                });
+            }
 
-        res.cookie('jwt', refreshToken, {
-            httpOnly: true,
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000
-        });
+            await mongoConnector.updateOne<User>('users', foundUser);
 
-        res.json({ accessToken });
+            return res.status(401).json({
+                'message': 'Invalid credentials.'
+            });
+        }
     }
-    else {
-        res.sendStatus(401);
+    catch (err) {
+        console.error('Error logging in:', err);
+        res.status(500).json({ 'message': 'Error logging in.' });
     }
 };
 
@@ -76,32 +141,38 @@ interface LogoutRequestBody extends Request {
 }
 
 export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
-    const cookies = req.cookies;
+    try {
+        const cookies = req.cookies;
 
-    if (!cookies?.jwt) return res.sendStatus(204);
+        if (!cookies?.jwt) return res.sendStatus(204);
 
-    const refreshToken = cookies.jwt;
+        const refreshToken = cookies.jwt;
 
-    const foundUser = await mongoConnector.getOne<User>('users', { refreshToken });
-    if (!foundUser) {
+        const foundUser = await mongoConnector.getOne<User>('users', { refreshToken });
+        if (!foundUser) {
+            res.clearCookie('jwt', { 
+                httpOnly: true, 
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000 
+            });
+
+            return res.sendStatus(204);
+        }
+
+        foundUser.refreshToken = '';
+
+        await mongoConnector.updateOne<User>('users', foundUser);
+
         res.clearCookie('jwt', { 
             httpOnly: true, 
             sameSite: 'lax',
             maxAge: 24 * 60 * 60 * 1000 
         });
 
-        return res.sendStatus(204);
+        res.sendStatus(204);
     }
-
-    foundUser.refreshToken = '';
-
-    await mongoConnector.updateOne<User>('users', foundUser);
-
-    res.clearCookie('jwt', { 
-        httpOnly: true, 
-        sameSite: 'lax', 
-        maxAge: 24 * 60 * 60 * 1000 
-    });
-
-    res.sendStatus(204);
+    catch (err) {
+        console.error('Error logging out:', err);
+        res.status(500).json({ 'message': 'Error logging out.' });
+    }
 }

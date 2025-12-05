@@ -8,12 +8,14 @@ function Login() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isLocked, setIsLocked] = useState(false);
     const { doLogin } = useAuthContext();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+        setIsLocked(false);
         setLoading(true);
 
         if (!username || !password) {
@@ -27,7 +29,9 @@ function Login() {
         if (result.success) {
             navigate('/');
         } else {
-            setError('Login failed. Please check your credentials.');
+            setError(result.message || 'Login failed. Please check your credentials.');
+            // Check if account is locked (status 423)
+            setIsLocked(result.status === 423);
         }
         
         setLoading(false);
@@ -45,7 +49,7 @@ function Login() {
                             id="username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            disabled={loading}
+                            disabled={loading || isLocked}
                             required
                         />
                     </div>
@@ -56,13 +60,21 @@ function Login() {
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            disabled={loading}
+                            disabled={loading || isLocked}
                             required
                         />
                     </div>
-                    {error && <div className="error-message">{error}</div>}
-                    <button type="submit" disabled={loading} className="submit-button">
-                        {loading ? 'Logging in...' : 'Login'}
+                    {error && (
+                        <div className={`error-message ${isLocked ? 'locked-message' : ''}`}>
+                            {error}
+                        </div>
+                    )}
+                    <button 
+                        type="submit" 
+                        disabled={loading || isLocked} 
+                        className="submit-button"
+                    >
+                        {loading ? 'Logging in...' : isLocked ? 'Account Locked' : 'Login'}
                     </button>
                 </form>
             </div>

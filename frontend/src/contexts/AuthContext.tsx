@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { decodeToken } from '../utils/decodeToken';
 import { axiosAuthUnprotected } from '../api/axios';
 
@@ -15,7 +15,8 @@ interface AuthContextType {
     auth: AuthState;
     setAuth: React.Dispatch<React.SetStateAction<AuthState>>;
     getUser: () => AuthState['user'];   
-    doLogin: (loginBody: { username: string, password: string }) => Promise<{ success: boolean, status: number }>;
+    loading: boolean;
+    doLogin: (loginBody: { username: string, password: string }) => Promise<{ success: boolean, status: number, message?: string }>;
     doLogout: () => Promise<{ success: boolean, status: number }>;
     doRegister: (registerBody: { username: string, email: string, password: string }) => Promise<{ success: boolean, status: number }>;
 }
@@ -32,6 +33,31 @@ export const useAuthContext = () => {
 
 export const AuthProvider = ({children}: {children: React.ReactNode}) => {
     const [auth, setAuth] = useState<AuthState>({ user: null });
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        const restoreSession = async () => {
+            try {
+                // Attempt to refresh the access token using the refresh token cookie
+                const response = await axiosAuthUnprotected.get('/refresh');
+                const newAuth = decodeToken(response?.data.accessToken);
+                if (newAuth) {
+                    setAuth({
+                        accessToken: newAuth?.accessToken,
+                        user: newAuth?.user || null,
+                    });
+                }
+            } catch (err) {
+                // No valid refresh token cookie or it's expired
+                // Leave auth state as null (user is not logged in)
+                setAuth({ user: null });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        restoreSession();
+    }, []);
 
     const doLogin = async (loginBody: { username: string, password: string }) => {
         try {
@@ -43,9 +69,15 @@ export const AuthProvider = ({children}: {children: React.ReactNode}) => {
             });
             return { success: true, status: 200 };
         }
-        catch (err) {
+        catch (err: any) {
             console.error('Login failed:', err);
-            return { success: false, status: 500 };
+            const status = err?.response?.status || 500;
+            const message = err?.response?.data?.message || 'Login failed. Please try again.';
+            return { 
+                success: false, 
+                status,
+                message
+            };
         }
     }
 
@@ -77,7 +109,7 @@ export const AuthProvider = ({children}: {children: React.ReactNode}) => {
     }
 
     return (
-        <AuthContext.Provider value={{ auth, setAuth, getUser, doLogin, doLogout, doRegister }}>
+        <AuthContext.Provider value={{ auth, setAuth, getUser, loading, doLogin, doLogout, doRegister }}>
             {children}
         </AuthContext.Provider>
     );

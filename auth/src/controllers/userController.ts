@@ -11,13 +11,15 @@ interface ResetPasswordRequestBody {
 export const handleResetPassword = async (req: Request, res: Response) => {
     try {
         const { password, newPassword } = req.body as ResetPasswordRequestBody;
-        if ( !password || !newPassword ) return res.status(400).json({ 'message': 'Current password and new password are required.' });
-        if ( password === newPassword ) return res.status(400).json({ 'message': 'New password cannot be the same as the current password.' });
+
+        if (password === newPassword) return res.status(400).json({ 'message': 'New password cannot be the same as the current password.' });
 
         const { _id } = req as AuthUserRequest;
 
         const foundUser = await mongoConnector.getOne<User>('users', { _id });
-        if (!foundUser) return res.sendStatus(401);
+        if (!foundUser) {
+            return res.status(404).json({ 'message': 'User not found.' });
+        }
 
         const pMatch = await bcrypt.compare(password, foundUser.password);
         if (pMatch) {
@@ -27,7 +29,7 @@ export const handleResetPassword = async (req: Request, res: Response) => {
             res.json({ 'message': 'Password updated successfully.' });
         }
         else {
-            return res.sendStatus(401);
+            return res.status(401).json({ 'message': 'Current password is incorrect.' });
         }
     }
     catch (err) {
@@ -43,12 +45,11 @@ interface DeleteSelfRequestBody {
 export const handleDeleteSelf = async (req: Request, res: Response) => {
     try {
         const { password } = req.body as DeleteSelfRequestBody;
-        if ( !password ) return res.status(400).json({ 'message': 'Password is required.' });
 
         const { _id } = req as AuthUserRequest;
 
         const foundUser = await mongoConnector.getOne<User>('users', { _id });
-        if (!foundUser) return res.sendStatus(401);
+        if (!foundUser) return res.status(404).json({ 'message': 'User not found.' });
 
         const pMatch = await bcrypt.compare(password, foundUser.password);
         if (pMatch) {
@@ -56,7 +57,7 @@ export const handleDeleteSelf = async (req: Request, res: Response) => {
             res.json({ 'message': 'User deleted successfully.' });
         }
         else {
-            return res.sendStatus(401);
+            return res.status(401).json({ 'message': 'Password is incorrect.' });
         }
     }
     catch (err) {

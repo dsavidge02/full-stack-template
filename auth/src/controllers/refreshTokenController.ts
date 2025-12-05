@@ -22,39 +22,50 @@ const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 if (!refreshTokenSecret) throw new Error("Missing REFRESH_TOKEN_SECRET env variable.");
 
 export const handleRefreshToken = async (req: RefreshTokenRequestBody, res: Response) => {
-    const cookies = req.cookies;
-    if (!cookies?.jwt) return res.sendStatus(401);
+    try {
+        const cookies = req.cookies;
+        if (!cookies?.jwt) return res.sendStatus(401);
 
-    const refreshToken = cookies.jwt;
+        const refreshToken = cookies.jwt;
 
-    const foundUser = await mongoConnector.getOne<User>('users', { refreshToken });
-    if (!foundUser) return res.sendStatus(403);
-
-    jwt.verify(
-        refreshToken,
-        refreshTokenSecret,
-        (err, decoded) => {
-            if (err) return res.sendStatus(403);
-
-            const refreshTokenContents = decoded as RefreshTokenContents;
-            if (foundUser.username !== refreshTokenContents.username) return res.sendStatus(403);
-
-            const accessToken = jwt.sign(
-                {
-                    UserInfo: {
-                        _id: foundUser._id,
-                        username: foundUser.username,
-                        roles: foundUser.roles
-                    }
-                },
-                privateKey,
-                {
-                    algorithm: 'RS256',
-                    expiresIn: '30s'
-                }
-            );
-
-            res.json({ accessToken });
+        const foundUser = await mongoConnector.getOne<User>('users', { refreshToken });
+        if (!foundUser) return res.sendStatus(403);
+        
+        // Additional check: ensure the refreshToken in database is not empty (was cleared on logout)
+        if (!foundUser.refreshToken || foundUser.refreshToken === '') {
+            return res.sendStatus(403);
         }
-    )
+
+        jwt.verify(
+            refreshToken,
+            refreshTokenSecret,
+            (err, decoded) => {
+                if (err) return res.sendStatus(403);
+
+                const refreshTokenContents = decoded as RefreshTokenContents;
+                if (foundUser.username !== refreshTokenContents.username) return res.sendStatus(403);
+
+                const accessToken = jwt.sign(
+                    {
+                        UserInfo: {
+                            _id: foundUser._id,
+                            username: foundUser.username,
+                            roles: foundUser.roles
+                        }
+                    },
+                    privateKey,
+                    {
+                        algorithm: 'RS256',
+                        expiresIn: '30s'
+                    }
+                );
+
+                res.json({ accessToken });
+            }
+        )
+    }
+    catch (err) {
+        console.error('Error refreshing token:', err);
+        res.status(500).json({ 'message': 'Error refreshing token.' });
+    }
 };

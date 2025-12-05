@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getUsers, deleteUser, updateUserRoles } from '../../api/api';
+import { getUsers, deleteUser, updateUserRoles, unlockUser } from '../../api/api';
 import useAxiosPrivate from '../../hooks/useAxiosPrivate';
 import './Users.css';
 
@@ -9,6 +9,12 @@ interface User {
     email: string;
     roles: number[];
     twitch_user_id?: string;
+    failedLogin?: false | {
+        failedLoginAttempts: number;
+        lastFailedLoginAttempt: string;
+        isLocked: boolean;
+        accountLockedUntil: string;
+    };
 }
 
 const ROLES_LIST: { [key: number]: string } = {
@@ -104,6 +110,44 @@ function Users() {
         handleUpdateRoles(userId, editingRoles);
     };
 
+    const handleUnlockUser = async (userId: string) => {
+        try {
+            setUpdating(true);
+            await unlockUser(axiosPrivate, userId);
+            // Refresh users list to get updated failedLogin status
+            const data = await getUsers(axiosPrivate);
+            setUsers(data.users || []);
+            setError(null);
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Failed to unlock user');
+            console.error(err);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    };
+
+    const isAccountLocked = (user: User): boolean => {
+        if (!user.failedLogin) return false;
+        if (typeof user.failedLogin === 'boolean') return false;
+        if (!user.failedLogin.isLocked) return false;
+        const lockUntil = new Date(user.failedLogin.accountLockedUntil);
+        return lockUntil > new Date();
+    };
+
+    const getLockedUntilMessage = (user: User): string | null => {
+        if (!isAccountLocked(user)) return null;
+        if (!user.failedLogin || typeof user.failedLogin === 'boolean') return null;
+        const lockUntil = new Date(user.failedLogin.accountLockedUntil);
+        const now = new Date();
+        const minutesRemaining = Math.ceil((lockUntil.getTime() - now.getTime()) / (60 * 1000));
+        return `Locked for ${minutesRemaining} more minute${minutesRemaining !== 1 ? 's' : ''}`;
+    };
+
     const handleRoleToggle = (role: number) => {
         setEditingRoles(prev => 
             prev.includes(role)
@@ -165,9 +209,31 @@ function Users() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="scopes">
-                                        {getRoleNames(user.roles).join(', ')}
-                                    </span>
+                                    <>
+                                        <span className="scopes">
+                                            {getRoleNames(user.roles).join(', ')}
+                                        </span>
+                                        {user.failedLogin && typeof user.failedLogin !== 'boolean' && (
+                                            <div className="failed-login-info">
+                                                <div className="failed-login-header">
+                                                    <span className="failed-login-label">Failed Login Attempts:</span>
+                                                    <span className={`failed-login-count ${user.failedLogin.failedLoginAttempts >= 3 ? 'warning' : ''}`}>
+                                                        {user.failedLogin.failedLoginAttempts}
+                                                    </span>
+                                                </div>
+                                                {user.failedLogin.lastFailedLoginAttempt && (
+                                                    <div className="last-failed-attempt">
+                                                        Last attempt: {formatDate(user.failedLogin.lastFailedLoginAttempt)}
+                                                    </div>
+                                                )}
+                                                {isAccountLocked(user) && (
+                                                    <div className="account-locked-badge">
+                                                        🔒 {getLockedUntilMessage(user)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                             <div className="user-actions">
@@ -180,6 +246,15 @@ function Users() {
                                         >
                                             Edit Roles
                                         </button>
+                                        {isAccountLocked(user) && (
+                                            <button
+                                                className="btn-unlock"
+                                                onClick={() => handleUnlockUser(user._id)}
+                                                disabled={updating}
+                                            >
+                                                Unlock Account
+                                            </button>
+                                        )}
                                         <button
                                             className="btn-delete"
                                             onClick={() => setDeleteConfirmUserId(user._id)}
