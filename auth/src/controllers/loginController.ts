@@ -12,7 +12,18 @@ interface LoginRequestBody {
     password: string;
 }
 
-const privateKey = fs.readFileSync(path.join(__dirname, '../../certs/private.pem'));
+// Get certificate path from environment or use defaults
+const certPath = process.env.CERT_PATH || '/app/certs';
+const privateKeyPath = path.join(certPath, 'private.pem');
+// Fallback to local dev path if CERT_PATH not set and file doesn't exist at production path
+let privateKey: Buffer;
+if (fs.existsSync(privateKeyPath)) {
+    privateKey = fs.readFileSync(privateKeyPath);
+} else {
+    // Fallback to local development path
+    privateKey = fs.readFileSync(path.join(__dirname, '../../certs/private.pem'));
+}
+
 const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 if (!refreshTokenSecret) throw new Error("Missing REFRESH_TOKEN_SECRET env variable.");
 
@@ -60,7 +71,7 @@ export const handleLogin = async (req: Request, res: Response) => {
                 privateKey,
                 {
                     algorithm: 'RS256',
-                    expiresIn: '30s'
+                    expiresIn: '1500s'
                 }
             );
 
@@ -86,7 +97,8 @@ export const handleLogin = async (req: Request, res: Response) => {
 
             res.cookie('jwt', refreshToken, {
                 httpOnly: true,
-                sameSite: 'lax',
+                secure: true,
+                sameSite: 'strict',
                 maxAge: 24 * 60 * 60 * 1000
             });
 
@@ -152,7 +164,8 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
         if (!foundUser) {
             res.clearCookie('jwt', { 
                 httpOnly: true, 
-                sameSite: 'lax',
+                secure: true,
+                sameSite: 'strict',
                 maxAge: 24 * 60 * 60 * 1000 
             });
 
@@ -164,8 +177,9 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
         await mongoConnector.updateOne<User>('users', foundUser);
 
         res.clearCookie('jwt', { 
-            httpOnly: true, 
-            sameSite: 'lax',
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
             maxAge: 24 * 60 * 60 * 1000 
         });
 
