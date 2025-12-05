@@ -1,6 +1,6 @@
 import axios from 'axios';
-const BASE_URL = 'http://localhost:4000'; //Local develoment
-// const BASE_URL = '/auth/'; //Production
+// const BASE_URL = 'http://localhost:4000'; //Local develoment
+const BASE_URL = '/auth/'; //Production
 
 export default axios.create({
     baseURL: BASE_URL
