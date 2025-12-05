@@ -6,7 +6,7 @@ metadata:
   labels:
     app: auth-service
 spec:
-  replicas: 2
+  replicas: 1  # Reduced from 2 to save costs. Increase if high availability is needed.
   selector:
     matchLabels:
       app: auth-service
@@ -19,7 +19,7 @@ spec:
       - name: auth-service
         # Replace <ECR_BASE> with your ECR base URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com)
         # Or use the image tag from GitHub Actions: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/full-stack-template/auth-service:latest
-        image: <ECR_BASE>/full-stack-template/auth-service:latest
+        image: 914979267695.dkr.ecr.us-east-1.amazonaws.com/full-stack-template/auth-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 4000
@@ -42,11 +42,11 @@ spec:
               name: auth-config
               key: CERT_PATH
         # Environment variables from Secrets
-        - name: MONGO_URI
+        - name: AUTH_SERVICE_MONGO_URI
           valueFrom:
             secretKeyRef:
               name: auth-secrets
-              key: MONGO_URI
+              key: AUTH_SERVICE_MONGO_URI
         - name: REFRESH_TOKEN_SECRET
           valueFrom:
             secretKeyRef:
@@ -74,14 +74,14 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
-        # Resource limits
+        # Resource limits - right-sized based on actual usage (~3m CPU, ~43Mi memory)
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "64Mi"   # Reduced from 128Mi (actual usage ~43Mi)
+            cpu: "50m"       # Reduced from 100m (actual usage ~3m)
           limits:
-            memory: "256Mi"
-            cpu: "500m"
+            memory: "128Mi"  # Reduced from 256Mi
+            cpu: "200m"      # Reduced from 500m
       volumes:
       - name: certs
         secret:
