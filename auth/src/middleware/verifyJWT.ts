@@ -15,7 +15,17 @@ interface AccessTokenContents {
     exp: number;
 }
 
-const publicKey = fs.readFileSync(path.join(__dirname, '../../certs/public.pem'));
+// Get certificate path from environment or use defaults
+const certPath = process.env.CERT_PATH || '/app/certs';
+const publicKeyPath = path.join(certPath, 'public.pem');
+// Fallback to local dev path if CERT_PATH not set and file doesn't exist at production path
+let publicKey: Buffer;
+if (fs.existsSync(publicKeyPath)) {
+    publicKey = fs.readFileSync(publicKeyPath);
+} else {
+    // Fallback to local development path
+    publicKey = fs.readFileSync(path.join(__dirname, '../../certs/public.pem'));
+}
 
 export const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization || req.headers.Authorization;

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+  namespace: default
+data:
+  ENVIRONMENT: "prod"
+  AUTH_SERVICE_PORT: "4000"
+  CERT_PATH: "/app/certs"
+
