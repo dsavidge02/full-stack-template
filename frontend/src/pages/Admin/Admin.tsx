@@ -102,7 +102,7 @@ function Admin() {
         // Build Twitch authorization URL
         const clientId = 'oq27qs5xtr75kpnrwyp3xixylz1crt';
         const redirectUri = encodeURIComponent(
-            `${window.location.origin}/admin`
+            `https://savidgeapps.com/admin`
         );
         const scopes = encodeURIComponent('channel:read:polls channel:manage:polls moderator:read:followers channel:read:subscriptions');
         
