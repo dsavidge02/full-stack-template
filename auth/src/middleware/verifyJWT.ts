@@ -10,6 +10,7 @@ interface AccessTokenContents {
         _id: ObjectId;
         username: string;
         roles: number[];
+        twitch_user_id?: string;
     }
     iat: number;
     exp: number;
@@ -39,12 +40,13 @@ export const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
             if (err) return res.sendStatus(403);
 
             const accessTokenContents = decoded as AccessTokenContents;
-            const { _id, username, roles } = accessTokenContents.UserInfo;
+            const { _id, username, roles, twitch_user_id } = accessTokenContents.UserInfo;
 
             const authReq = req as AuthUserRequest;
             authReq._id = _id;
             authReq.username = username;
             authReq.roles = roles;
+            authReq.twitch_user_id = twitch_user_id;
             next();
         }
     )

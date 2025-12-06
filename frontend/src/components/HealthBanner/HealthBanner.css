@@ -1,0 +1,66 @@
+.health-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #dc3545;
+  color: white;
+  padding: 1rem;
+  z-index: 9999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease-out;
+  min-height: 4rem; /* Ensure consistent height for spacing calculations */
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.health-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.health-banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.health-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.health-banner-text strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.health-banner-message {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* Add padding to app content when banner is visible to prevent overlap */
+.app:has(.health-banner) {
+  padding-top: 4rem; /* Match banner min-height */
+}
+
+/* Ensure navbar has proper spacing when banner is visible */
+.app:has(.health-banner) .navbar {
+  position: relative;
+  z-index: 1;
+}
+

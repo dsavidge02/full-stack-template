@@ -18,7 +18,8 @@ const corsAllowedOrigins = [
 
 const corsOptions: CorsOptions = {
     origin: (origin, callback) => {
-        if (!origin || corsAllowedOrigins.includes(origin)) callback(null, true);
+        if (process.env.ENVIRONMENT === "dev") callback(null, true);
+        else if (!origin || corsAllowedOrigins.includes(origin)) callback(null, true);
         else callback(new Error("Not allowed by CORS"));
     },
     credentials: true,

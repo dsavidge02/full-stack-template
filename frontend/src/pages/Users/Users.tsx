@@ -39,7 +39,6 @@ function Users() {
             try {
                 setLoading(true);
                 const data = await getUsers(axiosPrivate);
-                console.log(data);
                 setUsers(data.users || []);
                 setError(null);
             } catch (err: any) {
@@ -178,6 +177,9 @@ function Users() {
                             <div className="user-info">
                                 <span className="username">{user.username}</span>
                                 <span className="email">{user.email}</span>
+                                {user.twitch_user_id && (
+                                    <span className="twitch-user-id">Twitch ID: {user.twitch_user_id}</span>
+                                )}
                                 {editingUserId === user._id ? (
                                     <div className="roles-editor">
                                         {ROLE_VALUES.map(role => (
