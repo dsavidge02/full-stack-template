@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import TwitchAdminService from '../services/twitchAdminService';
+import { getUserInfoById } from '../utils/twitchAPI';
 
 export const handleGetFollowers = async (req: Request, res: Response) => {
     try {
@@ -81,9 +82,26 @@ export const handleVerifyUserById = async (req: Request, res: Response) => {
             subscribed = !!(subscribersResult.value.data?.subscribers && subscribersResult.value.data.subscribers.length > 0);
         }
 
+        // Get user info by ID to retrieve username
+        let username: string | undefined;
+        
+        try {
+            const adminAccessToken = await TwitchAdminService.getInstance().getValidAccessToken();
+            if (adminAccessToken) {
+                const userInfoResult = await getUserInfoById(adminAccessToken, userId);
+                if (userInfoResult.success && userInfoResult.data) {
+                    username = userInfoResult.data.login || userInfoResult.data.display_name;
+                }
+            }
+        } catch (err) {
+            // If we can't get username, continue without it
+            console.error('Error fetching username by ID:', err);
+        }
+
         return res.status(200).json({
             following,
-            subscribed
+            subscribed,
+            username: username || undefined
         });
     }
     catch (err) {

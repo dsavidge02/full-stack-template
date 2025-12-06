@@ -87,9 +87,17 @@ export const handleVerifyUserByCode = async (req: Request, res: Response) => {
             subscribed = !!(subscribersResult.value.data?.subscribers && subscribersResult.value.data.subscribers.length > 0);
         }
 
+        // Extract email, username, and twitch_user_id from user info
+        const email = userInfoResponse.data.email;
+        const username = userInfoResponse.data.login || userInfoResponse.data.display_name;
+        const twitch_user_id = userInfoResponse.data.id;
+
         return res.status(200).json({
             following,
-            subscribed
+            subscribed,
+            email,
+            username,
+            twitch_user_id
         });
     }
     catch (err) {

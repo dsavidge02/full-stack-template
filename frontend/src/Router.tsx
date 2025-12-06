@@ -9,6 +9,8 @@ import Register from './pages/Register/Register';
 import Unauthorized from './pages/Unauthorized/Unauthorized';
 import Twitch from './pages/Twitch/Twitch';
 import Admin from './pages/Admin/Admin';
+import RegisterCallback from './pages/Register/RegisterCallback';
+import About from './pages/About/About';
 
 import RequireAuth from './components/Auth/RequireAuth';
 import DenyAuth from './components/Auth/DenyAuth';
@@ -20,10 +22,12 @@ function Router() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/twitch" element={<Twitch />} />
+                <Route path="/about" element={<About />} />
 
                 <Route element={<DenyAuth />}>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/register/callback" element={<RegisterCallback />} />
                 </Route>
 
                 <Route element={<RequireAuth allowedRoles={[1992]} />}>

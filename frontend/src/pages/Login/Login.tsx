@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useHealthCheck } from '../../hooks/useHealthCheck';
 import './Login.css';
 
 function Login() {
@@ -11,6 +12,7 @@ function Login() {
     const [isLocked, setIsLocked] = useState(false);
     const { doLogin } = useAuthContext();
     const navigate = useNavigate();
+    const { isHealthy: isAuthHealthy, isLoading: isAuthHealthLoading } = useHealthCheck();
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,6 +43,16 @@ function Login() {
         <div className="login-container">
             <div className="login-card">
                 <h1>Login</h1>
+                
+                {!isAuthHealthLoading && !isAuthHealthy && (
+                    <div className="error-message" style={{ marginBottom: '1.5rem' }}>
+                        <strong>⚠️ Auth Service Unavailable</strong>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>
+                            The authentication service is currently down. You cannot log in at this time.
+                        </p>
+                    </div>
+                )}
+                
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
                         <label htmlFor="username">Username</label>

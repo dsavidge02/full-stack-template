@@ -1,4 +1,4 @@
-import { getUserInfo, refreshUserAccessToken, getChannelFollowers, getChannelSubscribers } from '../utils/twitchAPI';
+import { getUserInfo, getUserInfoByLogin, refreshUserAccessToken, getChannelFollowers, getChannelSubscribers } from '../utils/twitchAPI';
 
 class TwitchAdminService {
     private static instance: TwitchAdminService;
@@ -27,12 +27,12 @@ class TwitchAdminService {
             // Calculate expiration time (expiresIn is in seconds)
             this.tokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
 
-            // Fetch streamer ID
-            const streamerId = await this.fetchStreamerId(accessToken);
+            // Fetch channel ID from channel login name (not the admin's user ID)
+            const streamerId = await this.fetchChannelId(accessToken);
             if (streamerId) {
                 this.streamerId = streamerId;
             } else {
-                console.error('Failed to fetch streamer ID, but token was stored');
+                console.error('Failed to fetch channel ID, but token was stored');
             }
 
             return true;
@@ -95,6 +95,22 @@ class TwitchAdminService {
         return await getChannelSubscribers(accessToken, this.streamerId, userId);
     }
 
+    private async fetchChannelId(accessToken: string): Promise<string | null> {
+        try {
+            // Get channel login name from environment variable, default to 'savidge_af'
+            const channelLogin = process.env.TWITCH_CHANNEL_LOGIN || 'savidge_af';
+            
+            const userInfoResponse = await getUserInfoByLogin(accessToken, channelLogin);
+            if (userInfoResponse.success && userInfoResponse.data) {
+                return userInfoResponse.data.id;
+            }
+            return null;
+        } catch (err) {
+            console.error('Error fetching channel ID:', err);
+            return null;
+        }
+    }
+
     private async fetchStreamerId(accessToken: string): Promise<string | null> {
         try {
             const userInfoResponse = await getUserInfo(accessToken);
@@ -126,11 +142,11 @@ class TwitchAdminService {
             this.scopes = refreshResponse.data.scope;
             this.tokenExpiresAt = new Date(Date.now() + refreshResponse.data.expires_in * 1000);
 
-            // Update streamer ID if needed (shouldn't change, but just in case)
+            // Update channel ID if needed (shouldn't change, but just in case)
             if (!this.streamerId) {
-                const streamerId = await this.fetchStreamerId(this.accessToken);
-                if (streamerId) {
-                    this.streamerId = streamerId;
+                const channelId = await this.fetchChannelId(this.accessToken);
+                if (channelId) {
+                    this.streamerId = channelId;
                 }
             }
 

@@ -59,3 +59,8 @@ export const getChannelSubscribers = async (axiosInstance: AxiosInstance, userId
     const response = await axiosInstance.get(url);
     return response.data;
 }
+
+export const verifyTwitchUserByCode = async (axiosInstance: AxiosInstance, code: string) => {
+    const response = await axiosInstance.post('/token/verify', { code });
+    return response.data;
+}

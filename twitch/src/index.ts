@@ -37,6 +37,9 @@ app.get('/health', (req, res) => {
     });
 });
 
+import { handleGetStatus } from "./controllers/adminController";
+app.get('/status', handleGetStatus);
+
 import { logger } from "./middleware/logEvents";
 app.use(logger);
 

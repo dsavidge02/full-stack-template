@@ -107,6 +107,54 @@ export const getUserInfo = async (accessToken: string) => {
     }
 }
 
+export const getUserInfoById = async (accessToken: string, userId: string) => {
+    try {
+        const userInfoResponse = await axios.get<UserInfoResponse>(
+            `https://api.twitch.tv/helix/users?id=${userId}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Client-ID': clientId,
+                },
+            }
+        );
+
+        if (!userInfoResponse.data.data || userInfoResponse.data.data.length === 0) {
+            return { success: false };
+        }
+
+        return { success: true, data: userInfoResponse.data.data[0] };
+    }
+    catch (err) {
+        console.error(err);
+        return { success: false }
+    }
+}
+
+export const getUserInfoByLogin = async (accessToken: string, login: string) => {
+    try {
+        const userInfoResponse = await axios.get<UserInfoResponse>(
+            `https://api.twitch.tv/helix/users?login=${login}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Client-ID': clientId,
+                },
+            }
+        );
+
+        if (!userInfoResponse.data.data || userInfoResponse.data.data.length === 0) {
+            return { success: false };
+        }
+
+        return { success: true, data: userInfoResponse.data.data[0] };
+    }
+    catch (err) {
+        console.error(err);
+        return { success: false }
+    }
+}
+
 interface ChannelFollowersResponse {
     total: number;
     data: {

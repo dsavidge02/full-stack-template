@@ -18,7 +18,7 @@ interface AuthContextType {
     loading: boolean;
     doLogin: (loginBody: { username: string, password: string }) => Promise<{ success: boolean, status: number, message?: string }>;
     doLogout: () => Promise<{ success: boolean, status: number }>;
-    doRegister: (registerBody: { username: string, email: string, password: string }) => Promise<{ success: boolean, status: number }>;
+    doRegister: (registerBody: { username: string, email: string, password: string, twitch_user_id?: string }) => Promise<{ success: boolean, status: number }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,7 +93,7 @@ export const AuthProvider = ({children}: {children: React.ReactNode}) => {
         }
     }
 
-    const doRegister = async (registerBody: { username: string, email: string, password: string }) => {
+    const doRegister = async (registerBody: { username: string, email: string, password: string, twitch_user_id?: string }) => {
         try {
             await axiosAuthUnprotected.post('/register', JSON.stringify(registerBody));
             return { success: true, status: 201 };

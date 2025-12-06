@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import twitchAxios from '../../api/twitchAxios';
 import { getChannelFollowers, getChannelSubscribers } from '../../api/api';
+import { useTwitchHealthCheck } from '../../hooks/useTwitchHealthCheck';
 import './Twitch.css';
 
 interface Follower {
@@ -41,6 +42,7 @@ function Twitch() {
     const [error, setError] = useState<string | null>(null);
     const [followers, setFollowers] = useState<FollowersData | null>(null);
     const [subscribers, setSubscribers] = useState<SubscribersData | null>(null);
+    const { isHealthy: isTwitchHealthy } = useTwitchHealthCheck();
 
     useEffect(() => {
         loadData();
@@ -58,17 +60,25 @@ function Twitch() {
             ]);
 
             // Handle followers
-            if (followersResponse.status === 'fulfilled' && followersResponse.value.success) {
-                setFollowers(followersResponse.value.data);
+            if (followersResponse.status === 'fulfilled') {
+                if (followersResponse.value?.success && followersResponse.value.data) {
+                    setFollowers(followersResponse.value.data);
+                } else {
+                    console.error('Failed to load followers:', followersResponse.value);
+                }
             } else {
-                console.error('Failed to load followers:', followersResponse);
+                console.error('Failed to load followers:', followersResponse.reason);
             }
 
             // Handle subscribers
-            if (subscribersResponse.status === 'fulfilled' && subscribersResponse.value.success) {
-                setSubscribers(subscribersResponse.value.data);
+            if (subscribersResponse.status === 'fulfilled') {
+                if (subscribersResponse.value?.success && subscribersResponse.value.data) {
+                    setSubscribers(subscribersResponse.value.data);
+                } else {
+                    console.error('Failed to load subscribers:', subscribersResponse.value);
+                }
             } else {
-                console.error('Failed to load subscribers:', subscribersResponse);
+                console.error('Failed to load subscribers:', subscribersResponse.reason);
             }
 
             // Check if we got any data
@@ -76,7 +86,7 @@ function Twitch() {
             const hasSubscribers = subscribersResponse.status === 'fulfilled' && subscribersResponse.value.success;
 
             if (!hasFollowers && !hasSubscribers) {
-                setError('Error connecting to Twitch service');
+                setError('The Twitch service must be down. Unable to connect to Twitch service.');
             }
         } catch (err: any) {
             console.error('Error loading Twitch data:', err);
@@ -111,14 +121,14 @@ function Twitch() {
         );
     }
 
-    if (error && !followers && !subscribers) {
+    if ((error && !followers && !subscribers) || (!isTwitchHealthy && !loading)) {
         return (
             <div className="twitch-container">
                 <div className="twitch-card">
                     <h1>Twitch Channel</h1>
                     <div className="error-message">
                         <h3>Error</h3>
-                        <p>{error}</p>
+                        <p>{error || 'The Twitch service must be down. Unable to connect to Twitch service.'}</p>
                         <button onClick={loadData} className="twitch-connect-button">
                             Retry
                         </button>

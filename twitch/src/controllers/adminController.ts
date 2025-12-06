@@ -57,3 +57,28 @@ export const handleGetToken = async (req: Request, res: Response) => {
     }
 };
 
+export const handleGetStatus = async (req: Request, res: Response) => {
+    try {
+        const tokenInfo = TwitchAdminService.getInstance().getTokenInfo();
+
+        // Check if admin token is initialized
+        const isInitialized = !!(tokenInfo.accessToken && tokenInfo.refreshToken);
+
+        return res.status(200).json({
+            status: isInitialized ? 'ready' : 'not_initialized',
+            initialized: isInitialized,
+            message: isInitialized 
+                ? 'Admin token is initialized and ready' 
+                : 'Admin token is not initialized'
+        });
+    }
+    catch (err) {
+        console.error('Error in handleGetStatus:', err);
+        return res.status(500).json({ 
+            status: 'error',
+            initialized: false,
+            message: 'Error checking admin service status' 
+        });
+    }
+};
+

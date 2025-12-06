@@ -10,6 +10,7 @@ interface AccessTokenContents {
         _id: ObjectId;
         username: string;
         roles: number[];
+        twitch_user_id?: string;
     }
     iat: number;
     exp: number;
