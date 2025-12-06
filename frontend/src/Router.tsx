@@ -7,6 +7,8 @@ import Profile from './pages/Profile/Profile';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import Unauthorized from './pages/Unauthorized/Unauthorized';
+import Twitch from './pages/Twitch/Twitch';
+import Admin from './pages/Admin/Admin';
 
 import RequireAuth from './components/Auth/RequireAuth';
 import DenyAuth from './components/Auth/DenyAuth';
@@ -17,6 +19,7 @@ function Router() {
             <Navbar />
             <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/twitch" element={<Twitch />} />
 
                 <Route element={<DenyAuth />}>
                     <Route path="/login" element={<Login />} />
@@ -30,6 +33,7 @@ function Router() {
 
                 <Route element={<RequireAuth allowedRoles={[2002]} />}>
                     <Route path="/users" element={<Users />} />
+                    <Route path="/admin" element={<Admin />} />
                 </Route>
             </Routes>
         </BrowserRouter>

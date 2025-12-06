@@ -20,9 +20,11 @@ function Navbar() {
                 </Link>
                 <div className="navbar-links">
                     <Link to="/" className="navbar-link">Home</Link>
+                    <Link to="/twitch" className="navbar-link">Twitch</Link>
                     {isLoggedIn ? (
                         <>
                             <Link to="/users" className="navbar-link">Users</Link>
+                            <Link to="/admin" className="navbar-link">Admin</Link>
                             <Link to="/profile" className="navbar-link">Profile</Link>
                             <button onClick={handleLogout} className="navbar-button">
                                 Logout
