@@ -6,6 +6,7 @@ import path from 'path';
 import { mongoConnector } from '@dsavidge02/mongo-connector-ts';
 import { User } from '../types/userSchema'
 import { SECURITY_CONFIG } from '../config/security_config';
+import { getCookieOptions } from '../utils/cookieOptions';
 
 interface LoginRequestBody {
     username: string;
@@ -65,7 +66,8 @@ export const handleLogin = async (req: Request, res: Response) => {
                     UserInfo: {
                         _id: foundUser._id,
                         username: foundUser.username,
-                        roles: foundUser.roles
+                        roles: foundUser.roles,
+                        twitch_user_id: foundUser.twitch_user_id || ''
                     }
                 },
                 privateKey,
@@ -95,12 +97,7 @@ export const handleLogin = async (req: Request, res: Response) => {
                 });
             }
 
-            res.cookie('jwt', refreshToken, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000
-            });
+            res.cookie('jwt', refreshToken, getCookieOptions());
 
             res.json({ accessToken });
         }
@@ -161,13 +158,10 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
         const refreshToken = cookies.jwt;
 
         const foundUser = await mongoConnector.getOne<User>('users', { refreshToken });
-        if (!foundUser) {
-            res.clearCookie('jwt', { 
-                httpOnly: true, 
-                sameSite: 'lax',
-                maxAge: 24 * 60 * 60 * 1000 
-            });
+        const cookieOptions = getCookieOptions();
 
+        if (!foundUser) {
+            res.clearCookie('jwt', cookieOptions);
             return res.sendStatus(204);
         }
 
@@ -175,11 +169,7 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
 
         await mongoConnector.updateOne<User>('users', foundUser);
 
-        res.clearCookie('jwt', { 
-            httpOnly: true, 
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000 
-        });
+        res.clearCookie('jwt', cookieOptions);
 
         res.sendStatus(204);
     }

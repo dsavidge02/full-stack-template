@@ -61,7 +61,8 @@ export const handleRefreshToken = async (req: RefreshTokenRequestBody, res: Resp
                         UserInfo: {
                             _id: foundUser._id,
                             username: foundUser.username,
-                            roles: foundUser.roles
+                            roles: foundUser.roles,
+                            twitch_user_id: foundUser.twitch_user_id || ''
                         }
                     },
                     privateKey,

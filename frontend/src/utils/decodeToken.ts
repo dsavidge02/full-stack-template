@@ -5,6 +5,7 @@ interface UserJwtPayload extends JwtPayload {
         _id: string;
         username: string;
         roles: number[];
+        twitch_user_id?: string;
     };
 }
 
@@ -13,13 +14,14 @@ export const decodeToken = (accessToken: string) => {
 
     try {
         const decoded = jwtDecode<UserJwtPayload>(accessToken);
-        const { _id, username, roles } = decoded.UserInfo;
+        const { _id, username, roles, twitch_user_id } = decoded.UserInfo;
         return {
             accessToken: accessToken,
             user: {
                 _id: _id || '',
                 username: username || '',
                 roles: roles || [],
+                twitch_user_id: twitch_user_id || '',
             }
         };
     }
