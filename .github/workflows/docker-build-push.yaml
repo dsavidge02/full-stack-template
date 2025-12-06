@@ -61,6 +61,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push twitch service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./twitch
+          push: true
+          tags: |
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/twitch-service:latest
+            ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/twitch-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Output image URIs
         run: |
           echo "✅ Images pushed successfully!"
@@ -70,3 +81,6 @@ jobs:
           echo "Frontend Service:"
           echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:latest"
           echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/frontend-service:${{ github.sha }}"
+          echo "Twitch Service:"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/twitch-service:latest"
+          echo "  - ${{ steps.get-account-id.outputs.ECR_BASE }}/${{ env.ECR_REPOSITORY_PREFIX }}/twitch-service:${{ github.sha }}"
