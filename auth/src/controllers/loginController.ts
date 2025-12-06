@@ -164,6 +164,7 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
         if (!foundUser) {
             res.clearCookie('jwt', { 
                 httpOnly: true, 
+                secure: process.env.ENVIRONMENT !== 'dev',
                 sameSite: 'lax',
                 maxAge: 24 * 60 * 60 * 1000 
             });
@@ -177,6 +178,7 @@ export const handleLogout = async (req: LogoutRequestBody, res: Response) => {
 
         res.clearCookie('jwt', { 
             httpOnly: true, 
+            secure: process.env.ENVIRONMENT !== 'dev',
             sameSite: 'lax',
             maxAge: 24 * 60 * 60 * 1000 
         });
