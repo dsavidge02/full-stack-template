@@ -2,10 +2,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import './Navbar.css';
 
+const ADMIN_ROLE = 2002;
+
 function Navbar() {
     const { auth, doLogout } = useAuthContext();
     const navigate = useNavigate();
     const isLoggedIn = !!auth.user;
+    const isAdmin = isLoggedIn && auth.user?.roles?.includes(ADMIN_ROLE);
 
     const handleLogout = async () => {
         await doLogout();
@@ -20,9 +23,16 @@ function Navbar() {
                 </Link>
                 <div className="navbar-links">
                     <Link to="/" className="navbar-link">Home</Link>
+                    <Link to="/twitch" className="navbar-link">Twitch</Link>
+                    <Link to="/about" className="navbar-link">About</Link>
                     {isLoggedIn ? (
                         <>
-                            <Link to="/users" className="navbar-link">Users</Link>
+                            {isAdmin && (
+                                <>
+                                    <Link to="/users" className="navbar-link">Users</Link>
+                                    <Link to="/admin" className="navbar-link">Admin</Link>
+                                </>
+                            )}
                             <Link to="/profile" className="navbar-link">Profile</Link>
                             <button onClick={handleLogout} className="navbar-button">
                                 Logout

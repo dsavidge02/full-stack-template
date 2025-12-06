@@ -12,6 +12,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar when content fits */
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 #root {

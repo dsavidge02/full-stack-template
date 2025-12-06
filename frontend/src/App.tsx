@@ -1,5 +1,6 @@
 import Router from './Router'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
+import HealthBanner from './components/HealthBanner/HealthBanner'
 
 function AppContent() {
   const { loading } = useAuthContext();
@@ -23,6 +24,7 @@ function AppContent() {
 function App() {
   return (
     <div className="app">
+      <HealthBanner />
       <AuthProvider>
         <AppContent />
       </AuthProvider>

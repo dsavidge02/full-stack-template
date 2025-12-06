@@ -22,6 +22,7 @@ export interface NewUser {
     email: string;
     password: string;
     roles: number[];
+    twitch_user_id?: string;
 }
 
 export interface CleanUser {
@@ -42,4 +43,5 @@ export interface AuthUserRequest extends Request {
     _id: ObjectId;
     username: string;
     roles: number[];
+    twitch_user_id?: string;
 }
