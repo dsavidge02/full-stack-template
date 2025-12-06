@@ -47,7 +47,7 @@ function Register() {
         // Build Twitch authorization URL
         const clientId = 'oq27qs5xtr75kpnrwyp3xixylz1crt';
         const redirectUri = encodeURIComponent(
-            `http://localhost:5173/register/callback`
+            `${window.location.origin}/register/callback`
         );
         const scopes = encodeURIComponent('user:read:email');
         
