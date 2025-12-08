@@ -4,8 +4,6 @@ import cookieParser from "cookie-parser";
 
 const app = express().disable("x-powered-by");
 
-import dotenv from "dotenv";
-dotenv.config();
 const env = process.env.ENVIRONMENT;
 if (!env) throw new Error('Missing ENVIRONMENT.');
 const port = process.env.AUTH_SERVICE_PORT;
@@ -14,9 +12,8 @@ const mongoURI = process.env.AUTH_SERVICE_MONGO_URI;
 if (!mongoURI) throw new Error('Missing AUTH_SERVICE_MONGO_URI.');
 
 const corsAllowedOrigins = [
-    "http://localhost:8080",
     "https://savidgeapps.com",
-    "http://savidgeapps.com"
+    "https://www.savidgeapps.com",
 ];
 
 const corsOptions: CorsOptions = {

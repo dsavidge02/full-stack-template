@@ -86,7 +86,7 @@ Create the secret containing MongoDB URI and refresh token secret:
 
 ```bash
 kubectl create secret generic auth-secrets \
-  --from-literal=MONGO_URI='<your-mongodb-connection-string>' \
+  --from-literal=AUTH_SERVICE_MONGO_URI='<your-mongodb-connection-string>' \
   --from-literal=REFRESH_TOKEN_SECRET='<your-refresh-token-secret>' \
   --namespace=default
 ```
@@ -254,7 +254,7 @@ kubectl rollout restart deployment/auth-service
 
 ```bash
 kubectl create secret generic auth-secrets \
-  --from-literal=MONGO_URI='<new-mongo-uri>' \
+  --from-literal=AUTH_SERVICE_MONGO_URI='<new-mongo-uri>' \
   --from-literal=REFRESH_TOKEN_SECRET='<new-refresh-token-secret>' \
   --namespace=default \
   --dry-run=client -o yaml | kubectl apply -f -

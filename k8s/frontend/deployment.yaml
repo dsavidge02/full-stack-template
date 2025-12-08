@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frontend-service
 spec:
-  replicas: 2
+  replicas: 1  # Reduced from 2 to save costs. Increase if high availability is needed.
   selector:
     matchLabels:
       app: frontend-service
@@ -19,7 +19,7 @@ spec:
       - name: frontend-service
         # Replace <ECR_BASE> with your ECR base URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com)
         # Or use the image tag from GitHub Actions: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/full-stack-template/frontend-service:latest
-        image: <ECR_BASE>/full-stack-template/frontend-service:latest
+        image: 914979267695.dkr.ecr.us-east-1.amazonaws.com/full-stack-template/frontend-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -41,11 +41,11 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
-        # Resource limits
+        # Resource limits - right-sized based on actual usage (~1m CPU, ~3Mi memory)
         resources:
           requests:
-            memory: "64Mi"
-            cpu: "50m"
+            memory: "32Mi"   # Reduced from 64Mi (actual usage ~3Mi)
+            cpu: "25m"       # Reduced from 50m (actual usage ~1m)
           limits:
-            memory: "128Mi"
-            cpu: "200m"
+            memory: "64Mi"   # Reduced from 128Mi
+            cpu: "100m"      # Reduced from 200m

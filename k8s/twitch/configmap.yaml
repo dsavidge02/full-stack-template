@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: twitch-config
+  namespace: default
+data:
+  ENVIRONMENT: "prod"
+  TWITCH_SERVICE_PORT: "4001"
+  CERT_PATH: "/app/certs"
+  TWITCH_CHANNEL_LOGIN: "savidge_af"
+

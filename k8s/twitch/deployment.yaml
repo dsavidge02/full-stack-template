@@ -1,57 +1,68 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service
+  name: twitch-service
   namespace: default
   labels:
-    app: auth-service
+    app: twitch-service
 spec:
   replicas: 1  # Reduced from 2 to save costs. Increase if high availability is needed.
   selector:
     matchLabels:
-      app: auth-service
+      app: twitch-service
   template:
     metadata:
       labels:
-        app: auth-service
+        app: twitch-service
     spec:
       containers:
-      - name: auth-service
+      - name: twitch-service
         # Replace <ECR_BASE> with your ECR base URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com)
-        # Or use the image tag from GitHub Actions: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/full-stack-template/auth-service:latest
-        image: 914979267695.dkr.ecr.us-east-1.amazonaws.com/full-stack-template/auth-service:latest
+        # Or use the image tag from GitHub Actions: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/full-stack-template/twitch-service:latest
+        image: 914979267695.dkr.ecr.us-east-1.amazonaws.com/full-stack-template/twitch-service:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 4000
+        - containerPort: 4001
           name: http
         env:
         # Environment variables from ConfigMap
         - name: ENVIRONMENT
           valueFrom:
             configMapKeyRef:
-              name: auth-config
+              name: twitch-config
               key: ENVIRONMENT
-        - name: AUTH_SERVICE_PORT
+        - name: TWITCH_SERVICE_PORT
           valueFrom:
             configMapKeyRef:
-              name: auth-config
-              key: AUTH_SERVICE_PORT
+              name: twitch-config
+              key: TWITCH_SERVICE_PORT
         - name: CERT_PATH
           valueFrom:
             configMapKeyRef:
-              name: auth-config
+              name: twitch-config
               key: CERT_PATH
+        - name: TWITCH_CHANNEL_LOGIN
+          valueFrom:
+            configMapKeyRef:
+              name: twitch-config
+              key: TWITCH_CHANNEL_LOGIN
+              optional: true
         # Environment variables from Secrets
-        - name: AUTH_SERVICE_MONGO_URI
+        - name: TWITCH_CLIENT_ID
           valueFrom:
             secretKeyRef:
-              name: auth-secrets
-              key: AUTH_SERVICE_MONGO_URI
-        - name: REFRESH_TOKEN_SECRET
+              name: twitch-secrets
+              key: TWITCH_CLIENT_ID
+        - name: TWITCH_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: auth-secrets
-              key: REFRESH_TOKEN_SECRET
+              name: twitch-secrets
+              key: TWITCH_CLIENT_SECRET
+        - name: TWITCH_REDIRECT_URI
+          valueFrom:
+            secretKeyRef:
+              name: twitch-secrets
+              key: TWITCH_REDIRECT_URI
         # Volume mount for certificates
         volumeMounts:
         - name: certs
@@ -61,7 +72,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 4000
+            port: 4001
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -69,19 +80,19 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-            port: 4000
+            port: 4001
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
-        # Resource limits - right-sized based on actual usage (~3m CPU, ~43Mi memory)
+        # Resource limits - conservative values, adjust based on actual usage
         resources:
           requests:
-            memory: "64Mi"   # Reduced from 128Mi (actual usage ~43Mi)
-            cpu: "50m"       # Reduced from 100m (actual usage ~3m)
+            memory: "64Mi"
+            cpu: "50m"
           limits:
-            memory: "128Mi"  # Reduced from 256Mi
-            cpu: "200m"      # Reduced from 500m
+            memory: "128Mi"
+            cpu: "200m"
       volumes:
       - name: certs
         secret:

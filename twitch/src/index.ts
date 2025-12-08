@@ -4,15 +4,14 @@ import cookieParser from "cookie-parser";
 
 const app = express().disable("x-powered-by");
 
-import dotenv from "dotenv";
-dotenv.config();
 const env = process.env.ENVIRONMENT;
 if (!env) throw new Error('Missing ENVIRONMENT.');
 const port = process.env.TWITCH_SERVICE_PORT;
 if (!port) throw new Error('Missing TWITCH_SERVICE_PORT.');
 
 const corsAllowedOrigins = [
-    "http://localhost:8080",
+    "https://savidgeapps.com",
+    "https://www.savidgeapps.com",
 ];
 
 const corsOptions: CorsOptions = {
@@ -55,6 +54,6 @@ app.use("/channel", channelRouter);
 import { errorHandler } from "./middleware/errorHandler";
 app.use(errorHandler);
 
-let server = app.listen(port, () => {
+app.listen(port, () => {
     console.log(`Twitch service is running on port:${port}`);
 });
