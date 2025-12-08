@@ -63,6 +63,11 @@ spec:
             secretKeyRef:
               name: twitch-secrets
               key: TWITCH_REDIRECT_URI
+        - name: TWITCH_SERVICE_MONGO_URI
+          valueFrom: 
+            secretKeyRef:
+              name: auth-secrets
+              key: AUTH_SERVICE_MONGO_URI
         # Volume mount for certificates
         volumeMounts:
         - name: certs

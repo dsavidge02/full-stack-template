@@ -1,16 +1,7 @@
 import { useEffect } from "react";
-import { useAuthContext } from "../contexts/AuthContext";
+import { twitchAxiosPrivate } from "../api/twitchAxios";
 import useRefreshToken from "./useRefreshToken";
-import axios from "axios";
-
-const TWITCH_BASE_URL = 'http://localhost:4001'; // Local development - adjust port as needed
-// const TWITCH_BASE_URL = '/twitch/'; // Production
-
-const twitchAxiosPrivate = axios.create({
-    baseURL: TWITCH_BASE_URL,
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true
-});
+import { useAuthContext } from "../contexts/AuthContext";
 
 const useTwitchAxiosPrivate = () => {
     const refresh = useRefreshToken();
