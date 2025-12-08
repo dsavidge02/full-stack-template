@@ -783,9 +783,49 @@ class TwitchEventSubService {
 
             // Log specific event details based on type
             this.logEventDetails(subscriptionType, event);
+
+            // Broadcast to dashboard WebSocket clients
+            this.broadcastToDashboard(subscriptionType, event);
         } catch (err: any) {
             console.error('Error handling EventSub notification:', err);
             console.error('Notification payload:', JSON.stringify(notification, null, 2));
+        }
+    }
+
+    /**
+     * Broadcasts EventSub notifications to dashboard WebSocket clients.
+     * @param subscriptionType - Type of subscription (e.g., 'stream.online', 'channel.follow')
+     * @param event - Event data from Twitch
+     */
+    private broadcastToDashboard(subscriptionType: string, event: any): void {
+        try {
+            // Lazy import to avoid circular dependency
+            import('./dashboardWebSocketService').then(module => {
+                const DashboardWebSocketService = module.default;
+                const dashboardService = DashboardWebSocketService.getInstance();
+
+                switch (subscriptionType) {
+                    case 'stream.online':
+                        dashboardService.broadcastStreamStarted();
+                        break;
+                    case 'stream.offline':
+                        dashboardService.broadcastStreamEnded();
+                        break;
+                    case 'channel.follow':
+                        const followerUsername = event.user_name || event.user_login || 'Unknown';
+                        dashboardService.broadcastNewFollower(followerUsername);
+                        break;
+                    case 'channel.subscribe':
+                        const subscriberUsername = event.user_name || event.user_login || 'Unknown';
+                        dashboardService.broadcastNewSubscriber(subscriberUsername);
+                        break;
+                }
+            }).catch(() => {
+                // Silently fail if dashboard service is not available
+                // This allows EventSub to work even if dashboard WebSocket is not initialized
+            });
+        } catch (err: any) {
+            // Silently fail if dashboard service is not available
         }
     }
 

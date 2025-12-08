@@ -1,6 +1,7 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 import Navbar from './components/Navbar/Navbar';
+import HealthBanner from './components/HealthBanner/HealthBanner';
 import Home from './pages/Home/Home';
 import Users from './pages/Users/Users';
 import Profile from './pages/Profile/Profile';
@@ -11,17 +12,23 @@ import Twitch from './pages/Twitch/Twitch';
 import Admin from './pages/Admin/Admin';
 import RegisterCallback from './pages/Register/RegisterCallback';
 import About from './pages/About/About';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 import RequireAuth from './components/Auth/RequireAuth';
 import DenyAuth from './components/Auth/DenyAuth';
 
-function Router() {
+function RouterContent() {
+    const location = useLocation();
+    const isDashboard = location.pathname === '/twitch/dashboard';
+
     return (
-        <BrowserRouter>
-            <Navbar />
+        <>
+            {!isDashboard && <HealthBanner />}
+            {!isDashboard && <Navbar />}
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/twitch" element={<Twitch />} />
+                <Route path="/twitch/dashboard" element={<Dashboard />} />
                 <Route path="/about" element={<About />} />
 
                 <Route element={<DenyAuth />}>
@@ -40,8 +47,16 @@ function Router() {
                     <Route path="/admin" element={<Admin />} />
                 </Route>
             </Routes>
+        </>
+    );
+}
+
+function Router() {
+    return (
+        <BrowserRouter>
+            <RouterContent />
         </BrowserRouter>
-    )
+    );
 }
 
 export default Router;

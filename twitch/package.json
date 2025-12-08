@@ -1,6 +1,6 @@
 {
     "name": "@dsavidge02/twitch-service-ts",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Twitch service for the full stack template",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -27,6 +27,7 @@
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
         "jsonwebtoken": "^9.0.2",
+        "socket.io": "^4.7.5",
         "uuid": "^11.1.0",
         "ws": "^8.18.0"
     },

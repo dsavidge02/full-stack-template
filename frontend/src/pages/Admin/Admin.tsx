@@ -9,7 +9,10 @@ import {
     getEventSubWebSocketStatus,
     createEventSubSubscription,
     getEventSubSubscriptions,
-    deleteEventSubSubscription
+    deleteEventSubSubscription,
+    setFollowerGoal,
+    setSubscriberGoal,
+    getAllGoalStatuses
 } from '../../api/api';
 import './Admin.css';
 
@@ -57,6 +60,19 @@ function Admin() {
     const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
     const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
     const [selectedSubscriptionType, setSelectedSubscriptionType] = useState('');
+    
+    // Goal state
+    interface GoalStatus {
+        current: number;
+        goal: number;
+        met: boolean;
+        remaining: number;
+        percentage: number;
+    }
+    const [goalStatuses, setGoalStatuses] = useState<{ follower?: GoalStatus; subscriber?: GoalStatus } | null>(null);
+    const [goalLoading, setGoalLoading] = useState(false);
+    const [followerGoalInput, setFollowerGoalInput] = useState('');
+    const [subscriberGoalInput, setSubscriberGoalInput] = useState('');
 
     // Check for callback code
     useEffect(() => {
@@ -73,6 +89,7 @@ function Admin() {
         loadTokenInfo();
         loadWebSocketStatus();
         loadSubscriptions();
+        loadGoalStatuses();
     }, []);
 
     const loadTokenInfo = async () => {
@@ -285,6 +302,76 @@ function Admin() {
         } catch (err: any) {
             console.error('Error deleting subscription:', err);
             setError(err.response?.data?.message || 'Failed to delete subscription');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadGoalStatuses = async () => {
+        setGoalLoading(true);
+        try {
+            const response = await getAllGoalStatuses(twitchAxiosPrivate);
+            if (response.success && response.data) {
+                setGoalStatuses(response.data);
+            }
+        } catch (err: any) {
+            console.error('Error loading goal statuses:', err);
+        } finally {
+            setGoalLoading(false);
+        }
+    };
+
+    const handleSetFollowerGoal = async () => {
+        const goal = parseInt(followerGoalInput);
+        if (isNaN(goal) || goal <= 0) {
+            setError('Please enter a valid positive number');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await setFollowerGoal(twitchAxiosPrivate, goal);
+            if (response.success) {
+                setSuccess('Follower goal set successfully');
+                setFollowerGoalInput('');
+                await loadGoalStatuses();
+            } else {
+                setError(response.message || 'Failed to set follower goal');
+            }
+        } catch (err: any) {
+            console.error('Error setting follower goal:', err);
+            setError(err.response?.data?.message || 'Failed to set follower goal');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSetSubscriberGoal = async () => {
+        const goal = parseInt(subscriberGoalInput);
+        if (isNaN(goal) || goal <= 0) {
+            setError('Please enter a valid positive number');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await setSubscriberGoal(twitchAxiosPrivate, goal);
+            if (response.success) {
+                setSuccess('Subscriber goal set successfully');
+                setSubscriberGoalInput('');
+                await loadGoalStatuses();
+            } else {
+                setError(response.message || 'Failed to set subscriber goal');
+            }
+        } catch (err: any) {
+            console.error('Error setting subscriber goal:', err);
+            setError(err.response?.data?.message || 'Failed to set subscriber goal');
         } finally {
             setLoading(false);
         }
@@ -535,6 +622,124 @@ function Admin() {
                         </div>
                     </div>
                 )}
+
+                {/* Goals Section */}
+                <div className="token-section">
+                    <h2>Follower & Subscriber Goals</h2>
+                    <p className="section-description">
+                        Set and track follower and subscriber goals for your channel.
+                    </p>
+
+                    <div className="goals-container">
+                        {/* Follower Goal */}
+                        <div className="goal-card">
+                            <h3>Follower Goal</h3>
+                            {goalStatuses?.follower ? (
+                                <div className="goal-status">
+                                    <div className="goal-progress">
+                                        <div className="progress-bar-container">
+                                            <div 
+                                                className="progress-bar" 
+                                                style={{ width: `${Math.min(100, goalStatuses.follower.percentage)}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="progress-text">
+                                            {goalStatuses.follower.current.toLocaleString()} / {goalStatuses.follower.goal.toLocaleString()} 
+                                            ({goalStatuses.follower.percentage.toFixed(1)}%)
+                                        </div>
+                                    </div>
+                                    <div className="goal-details">
+                                        <div className="goal-detail-item">
+                                            <strong>Remaining:</strong> {goalStatuses.follower.remaining.toLocaleString()}
+                                        </div>
+                                        <div className={`goal-status-badge ${goalStatuses.follower.met ? 'met' : 'not-met'}`}>
+                                            {goalStatuses.follower.met ? '✓ Goal Met!' : 'In Progress'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="no-goal">No follower goal set</p>
+                            )}
+                            <div className="goal-input-group">
+                                <input
+                                    type="number"
+                                    value={followerGoalInput}
+                                    onChange={(e) => setFollowerGoalInput(e.target.value)}
+                                    placeholder="Enter follower goal"
+                                    className="goal-input"
+                                    min="1"
+                                    disabled={loading}
+                                />
+                                <button
+                                    onClick={handleSetFollowerGoal}
+                                    className="admin-button primary"
+                                    disabled={loading || !followerGoalInput}
+                                >
+                                    {loading ? 'Setting...' : 'Set Goal'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Subscriber Goal */}
+                        <div className="goal-card">
+                            <h3>Subscriber Goal</h3>
+                            {goalStatuses?.subscriber ? (
+                                <div className="goal-status">
+                                    <div className="goal-progress">
+                                        <div className="progress-bar-container">
+                                            <div 
+                                                className="progress-bar" 
+                                                style={{ width: `${Math.min(100, goalStatuses.subscriber.percentage)}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="progress-text">
+                                            {goalStatuses.subscriber.current.toLocaleString()} / {goalStatuses.subscriber.goal.toLocaleString()} 
+                                            ({goalStatuses.subscriber.percentage.toFixed(1)}%)
+                                        </div>
+                                    </div>
+                                    <div className="goal-details">
+                                        <div className="goal-detail-item">
+                                            <strong>Remaining:</strong> {goalStatuses.subscriber.remaining.toLocaleString()}
+                                        </div>
+                                        <div className={`goal-status-badge ${goalStatuses.subscriber.met ? 'met' : 'not-met'}`}>
+                                            {goalStatuses.subscriber.met ? '✓ Goal Met!' : 'In Progress'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="no-goal">No subscriber goal set</p>
+                            )}
+                            <div className="goal-input-group">
+                                <input
+                                    type="number"
+                                    value={subscriberGoalInput}
+                                    onChange={(e) => setSubscriberGoalInput(e.target.value)}
+                                    placeholder="Enter subscriber goal"
+                                    className="goal-input"
+                                    min="1"
+                                    disabled={loading}
+                                />
+                                <button
+                                    onClick={handleSetSubscriberGoal}
+                                    className="admin-button primary"
+                                    disabled={loading || !subscriberGoalInput}
+                                >
+                                    {loading ? 'Setting...' : 'Set Goal'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="goal-actions">
+                        <button
+                            onClick={loadGoalStatuses}
+                            className="admin-button secondary"
+                            disabled={goalLoading}
+                        >
+                            {goalLoading ? 'Loading...' : 'Refresh Goals'}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -107,3 +107,29 @@ export const deleteEventSubSubscription = async (axiosInstance: AxiosInstance, t
     const response = await axiosInstance.delete(`/eventsub/subscriptions/${type}`);
     return response.data;
 }
+
+// Goal Management
+export const setFollowerGoal = async (axiosInstance: AxiosInstance, goal: number) => {
+    const response = await axiosInstance.post('/goals/follower', { goal });
+    return response.data;
+}
+
+export const setSubscriberGoal = async (axiosInstance: AxiosInstance, goal: number) => {
+    const response = await axiosInstance.post('/goals/subscriber', { goal });
+    return response.data;
+}
+
+export const getFollowerGoalStatus = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals/follower');
+    return response.data;
+}
+
+export const getSubscriberGoalStatus = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals/subscriber');
+    return response.data;
+}
+
+export const getAllGoalStatuses = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals');
+    return response.data;
+}

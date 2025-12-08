@@ -1,6 +1,7 @@
 import express from "express";
 import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
+import { Server as HTTPServer } from "http";
 
 const app = express().disable("x-powered-by");
 
@@ -57,19 +58,45 @@ app.use("/channel", channelRouter);
 import eventSubRouter from "./routes/protected/eventSub";
 app.use("/eventsub", eventSubRouter);
 
+import goalsRouter from "./routes/goals";
+app.use("/goals", goalsRouter);
+
+import dashboardRouter from "./routes/dashboard";
+app.use("/dashboard", dashboardRouter);
+
 import { errorHandler } from "./middleware/errorHandler";
 app.use(errorHandler);
 
+// MongoDB connection and server startup
+import { mongoConnector } from "@dsavidge02/mongo-connector-ts";
+
+const mongoURI = process.env.TWITCH_SERVICE_MONGO_URI;
+if (!mongoURI) throw new Error('Missing TWITCH_SERVICE_MONGO_URI.');
+
 // Initialize EventSub service on startup
 import TwitchEventSubService from "./services/twitchEventSubService";
-TwitchEventSubService.getInstance().initialize()
+import DashboardWebSocketService from "./services/dashboardWebSocketService";
+
+mongoConnector.connect(mongoURI)
     .then(() => {
-        console.log('EventSub service initialized');
+        mongoConnector.setDB("twitch");
+        console.log('Connected to MongoDB (twitch database)');
+
+        TwitchEventSubService.getInstance().initialize()
+            .then(() => {
+                console.log('EventSub service initialized');
+            })
+            .catch((err) => {
+                console.error('Failed to initialize EventSub service:', err);
+            });
+
+        const server = app.listen(port, () => {
+            console.log(`Twitch service is running on port:${port}`);
+        });
+
+        // Initialize Dashboard WebSocket service
+        DashboardWebSocketService.getInstance().initialize(server);
     })
     .catch((err) => {
-        console.error('Failed to initialize EventSub service:', err);
+        console.error('ERROR: Failed to connect to MongoDB:', err);
     });
-
-app.listen(port, () => {
-    console.log(`Twitch service is running on port:${port}`);
-});
