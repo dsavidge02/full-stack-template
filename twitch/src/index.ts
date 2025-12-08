@@ -4,6 +4,9 @@ import cookieParser from "cookie-parser";
 
 const app = express().disable("x-powered-by");
 
+import dotenv from "dotenv";
+dotenv.config();
+
 const env = process.env.ENVIRONMENT;
 if (!env) throw new Error('Missing ENVIRONMENT.');
 const port = process.env.TWITCH_SERVICE_PORT;
@@ -51,8 +54,21 @@ app.use("/admin", adminRouter);
 import channelRouter from "./routes/channel";
 app.use("/channel", channelRouter);
 
+import eventSubRouter from "./routes/protected/eventSub";
+app.use("/eventsub", eventSubRouter);
+
 import { errorHandler } from "./middleware/errorHandler";
 app.use(errorHandler);
+
+// Initialize EventSub service on startup
+import TwitchEventSubService from "./services/twitchEventSubService";
+TwitchEventSubService.getInstance().initialize()
+    .then(() => {
+        console.log('EventSub service initialized');
+    })
+    .catch((err) => {
+        console.error('Failed to initialize EventSub service:', err);
+    });
 
 app.listen(port, () => {
     console.log(`Twitch service is running on port:${port}`);
