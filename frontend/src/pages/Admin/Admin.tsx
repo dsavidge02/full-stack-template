@@ -103,6 +103,7 @@ function Admin() {
         const clientId = 'oq27qs5xtr75kpnrwyp3xixylz1crt';
         const redirectUri = encodeURIComponent(
             `https://savidgeapps.com/admin`
+            // 'http://localhost:5173/admin'
         );
         const scopes = encodeURIComponent('channel:read:polls channel:manage:polls moderator:read:followers channel:read:subscriptions');
         
