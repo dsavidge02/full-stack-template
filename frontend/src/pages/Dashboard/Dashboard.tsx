@@ -36,11 +36,10 @@ function Dashboard() {
     const [currentDisplay, setCurrentDisplay] = useState<DisplayType>('follower');
     const [isStreamLive, setIsStreamLive] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [wsConnected, setWsConnected] = useState(false);
     
     const socketRef = useRef<Socket | null>(null);
-    const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const notificationTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+    const rotationTimerRef = useRef<number | null>(null);
+    const notificationTimersRef = useRef<Map<string, number>>(new Map());
 
     // Load goal statuses on mount and periodically
     useEffect(() => {
@@ -64,31 +63,36 @@ function Dashboard() {
     // Setup Socket.IO connection
     useEffect(() => {
         const socket = createDashboardSocket(
-            (event: DashboardEvent) => {
-                // Handle stream events
-                if (event.type === 'stream_started') {
-                    setIsStreamLive(true);
-                    addNotification('stream_started', '🎥 Stream Started!');
-                } else if (event.type === 'stream_ended') {
-                    setIsStreamLive(false);
-                    addNotification('stream_ended', '🎬 Stream Ended');
-                } else if (event.type === 'new_follower') {
-                    const username = event.data.username || 'Someone';
-                    addNotification('new_follower', `🎉 ${username} followed!`);
-                } else if (event.type === 'new_subscriber') {
-                    const username = event.data.username || 'Someone';
-                    addNotification('new_subscriber', `🎉 ${username} subscribed!`);
+            (event) => {
+                // Type guard to ensure event matches DashboardEvent
+                if (event.type === 'stream_started' || event.type === 'stream_ended' || 
+                    event.type === 'new_follower' || event.type === 'new_subscriber') {
+                    const dashboardEvent = event as DashboardEvent;
+                    
+                    // Handle stream events
+                    if (dashboardEvent.type === 'stream_started') {
+                        setIsStreamLive(true);
+                        addNotification('stream_started', '🎥 Stream Started!');
+                    } else if (dashboardEvent.type === 'stream_ended') {
+                        setIsStreamLive(false);
+                        addNotification('stream_ended', '🎬 Stream Ended');
+                    } else if (dashboardEvent.type === 'new_follower') {
+                        const username = dashboardEvent.data.username || 'Someone';
+                        addNotification('new_follower', `🎉 ${username} followed!`);
+                    } else if (dashboardEvent.type === 'new_subscriber') {
+                        const username = dashboardEvent.data.username || 'Someone';
+                        addNotification('new_subscriber', `🎉 ${username} subscribed!`);
+                    }
                 }
             },
             () => {
-                setWsConnected(true);
+                // Connection established
             },
             () => {
-                setWsConnected(false);
+                // Disconnected
             },
             (error) => {
                 console.error('Socket.IO error:', error);
-                setWsConnected(false);
             }
         );
 
