@@ -64,3 +64,72 @@ export const verifyTwitchUserByCode = async (axiosInstance: AxiosInstance, code:
     const response = await axiosInstance.post('/token/verify', { code });
     return response.data;
 }
+
+// EventSub WebSocket Management
+export const startEventSubWebSocket = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.post('/eventsub/websocket/start');
+    return response.data;
+}
+
+export const stopEventSubWebSocket = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.post('/eventsub/websocket/stop');
+    return response.data;
+}
+
+export const getEventSubWebSocketStatus = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/eventsub/websocket/status');
+    return response.data;
+}
+
+// EventSub Subscription Management
+export const createEventSubSubscription = async (axiosInstance: AxiosInstance, type: string, broadcasterUserId?: string, moderatorUserId?: string, userId?: string) => {
+    const response = await axiosInstance.post('/eventsub/subscriptions', { 
+        type, 
+        broadcasterUserId, 
+        moderatorUserId,
+        userId
+    });
+    return response.data;
+}
+
+export const getEventSubSubscriptions = async (axiosInstance: AxiosInstance, type?: string) => {
+    const url = type ? `/eventsub/subscriptions?type=${type}` : '/eventsub/subscriptions';
+    const response = await axiosInstance.get(url);
+    return response.data;
+}
+
+export const getEventSubSubscription = async (axiosInstance: AxiosInstance, type: string) => {
+    const response = await axiosInstance.get(`/eventsub/subscriptions/${type}`);
+    return response.data;
+}
+
+export const deleteEventSubSubscription = async (axiosInstance: AxiosInstance, type: string) => {
+    const response = await axiosInstance.delete(`/eventsub/subscriptions/${type}`);
+    return response.data;
+}
+
+// Goal Management
+export const setFollowerGoal = async (axiosInstance: AxiosInstance, goal: number) => {
+    const response = await axiosInstance.post('/goals/follower', { goal });
+    return response.data;
+}
+
+export const setSubscriberGoal = async (axiosInstance: AxiosInstance, goal: number) => {
+    const response = await axiosInstance.post('/goals/subscriber', { goal });
+    return response.data;
+}
+
+export const getFollowerGoalStatus = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals/follower');
+    return response.data;
+}
+
+export const getSubscriberGoalStatus = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals/subscriber');
+    return response.data;
+}
+
+export const getAllGoalStatuses = async (axiosInstance: AxiosInstance) => {
+    const response = await axiosInstance.get('/goals');
+    return response.data;
+}
