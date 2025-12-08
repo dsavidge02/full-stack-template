@@ -2,8 +2,8 @@ import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 
 // Use the same base URL pattern as twitchAxios
-const TWITCH_BASE_URL = 'http://localhost:4001'; // Local development
-// const TWITCH_BASE_URL = '/twitch/'; // Production
+// const TWITCH_BASE_URL = 'http://localhost:4001'; // Local development
+const TWITCH_BASE_URL = '/twitch/'; // Production
 
 const dashboardAxios = axios.create({
     baseURL: TWITCH_BASE_URL,
@@ -33,21 +33,16 @@ export const createDashboardSocket = (
     onDisconnect?: () => void,
     onError?: (error: Error) => void
 ): Socket => {
-    // Determine Socket.IO URL based on environment
-    let socketUrl: string;
+    // Hardcoded production URL
+    const PRODUCTION_URL = 'https://savidgeapps.com';
+    const LOCAL_URL = 'http://localhost:4001';
     
-    if (process.env.NODE_ENV === 'production') {
-        // In production, use the same host with /twitch/ prefix
-        socketUrl = window.location.origin;
-    } else {
-        // Local development
-        socketUrl = 'http://localhost:4001';
-    }
+    // Determine if we're in production by checking the hostname
+    const isProduction = window.location.hostname === 'savidgeapps.com' || 
+                         window.location.hostname === 'www.savidgeapps.com';
     
-    // Determine the correct Socket.IO path based on environment
-    const socketPath = process.env.NODE_ENV === 'production' 
-        ? '/twitch/dashboard/socket.io'
-        : '/dashboard/socket.io';
+    const socketUrl = isProduction ? PRODUCTION_URL : LOCAL_URL;
+    const socketPath = isProduction ? '/twitch/dashboard/socket.io' : '/dashboard/socket.io';
     
     const socket = io(socketUrl, {
         path: socketPath,
