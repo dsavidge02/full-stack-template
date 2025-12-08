@@ -9,9 +9,9 @@ export default axios.create({
     withCredentials: true
 });
 
-// Add this export:
 export const twitchAxiosPrivate = axios.create({
     baseURL: TWITCH_BASE_URL,
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true
 });
+
